@@ -3,9 +3,9 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import os
 
-xls = pd.ExcelFile('/Users/lennardbornemann/NNetwork/M3Forecast.xls')
-
+xls = pd.ExcelFile('D:\\Neural\\NeuralNetworks\\M3Forecast.xls')
 original_data = pd.read_excel(xls, 'SINGLE')
 print(original_data.head())
 
