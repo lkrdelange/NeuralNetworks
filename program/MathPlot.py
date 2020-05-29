@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import tensorflow as tf
 
 
+# Class containing the math for the NN
 class MathPlot(object):
 
     @staticmethod
@@ -49,3 +51,15 @@ class MathPlot(object):
     @staticmethod
     def baseline(history):
         return np.mean(history)
+
+    @staticmethod
+    def get_mean(data, split):
+        return data[:split].mean()
+
+    @staticmethod
+    def get_std(data, split):
+        return data[:split].std()
+
+    @staticmethod
+    def get_standardized(data, mean, std):
+        return (data - mean) / std

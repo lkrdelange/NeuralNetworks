@@ -1,12 +1,10 @@
-import os
 import pandas as pd
 
 
+# Class for reading the data
 class Reader(object):
 
     @staticmethod
     def readfile():
-        path = os.path.dirname(os.path.abspath(__file__))
-        file = os.path.join(path, 'M3Forecast.xls')
-        original_data = pd.read_excel(file, 'SINGLE')
+        original_data = pd.read_excel('D:\\Neural\\data\\M3Forecast.xls', 'SINGLE')
         return original_data
