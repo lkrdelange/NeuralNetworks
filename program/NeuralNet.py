@@ -1,5 +1,6 @@
 from program.Reader import *
 from program.MathPlot import *
+import tensorflow as tf
 
 
 # Class that inits the NN
