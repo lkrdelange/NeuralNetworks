@@ -3,19 +3,30 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import os
 
-xls = pd.ExcelFile('/Users/lennardbornemann/NNetwork/M3Forecast.xls')
+path = os.path.abspath("M3TrainingSet.xlsx")
+xls = pd.ExcelFile(path)
 
-original_data = pd.read_excel(xls, 'SINGLE')
-print(original_data.head())
+original_data = pd.read_excel(xls)#, usecols = "G:BA")
+#print(original_data.head())
+observe = original_data.iloc[1:147, 6:26]
+observe.index = original_data.loc[1:147,'Series']
+print(observe)
+print(len(observe))
 
-observe = original_data.loc[0:645,'Demographic']
-observe.index = original_data.loc[0:645,'N']
-print(observe.head())
-
-#observe.plot(subplots = True)
-#plt.show()
-
+def calc_mean(dataset):
+    diff = list()
+    #dataset.plot(subplots = True)
+    #plt.show()
+    for i in range(1, len(dataset)):
+        value = dataset.iloc[i] - dataset.iloc[i-1]
+        diff.append(value)
+    return diff
+    #plt.plot(diff)
+    #plt.show()
+        
+    
 def univariate_data(dataset, start_index, end_index, history_size, target_size):
     data = []
     labels = []
@@ -59,39 +70,48 @@ def show_plot(data, delta, title):
 def baseline(history):
     return np.mean(history)
 
-TRAIN_SPLIT = 515
+detrended = list ()
+for timeseries in range(len(observe)):
+    detrended.append(calc_mean(observe.iloc[timeseries]))
+
+print(len(detrended))
+TRAIN_SPLIT = 14
 tf.random.set_seed(13)
+print(detrended)
+print(detrended.values)
+#observe = observe.values
 
-observe = observe.values
-observe_train_mean = observe[:TRAIN_SPLIT].mean()
-observe_train_std = observe[:TRAIN_SPLIT].std()
+#observe_train_mean = observe[:TRAIN_SPLIT].mean()
+#observe_train_std = observe[:TRAIN_SPLIT].std()
 
-observe = (observe-observe_train_mean)/observe_train_std
+#observe = (observe-observe_train_mean)/observe_train_std
 
-past_hist = 20
-future_target = 0
+#past_hist = 20
+#future_target = 0
 
-x_train, y_train = univariate_data(observe, 0, TRAIN_SPLIT, past_hist, future_target)
+#x_train, y_train = univariate_data(observe, 0, TRAIN_SPLIT, past_hist, future_target)
 
-x_val, y_val = univariate_data(observe, TRAIN_SPLIT, None, past_hist, future_target)
+#x_val, y_val = univariate_data(observe, TRAIN_SPLIT, None, past_hist, future_target)
 
-print('Single win of past')
-print(x_train[0])
-print('\n Target')
-print(y_train[0])
+#print('Single win of past')
+#print(x_train[0])
+#print('\n Target')
+#print(y_train[0])
 
-show_plot([x_train[0], y_train[0], baseline(x_train[0])], 0, 'baseline sample')
+#show_plot([x_train[0], y_train[0], baseline(x_train[0])], 0, 'baseline sample')
 
-BATCH_SIZE = 256
-BUFFER_SIZE = 10000
+#BATCH_SIZE = 256
+#BUFFER_SIZE = 10000
 
-train_uni = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-train_uni = train_uni.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+#train_uni = tf.data.Dataset.from_tensor_slices((x_train, y_train))
+train_uni = train_uni.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
 
 val_uni = tf.data.Dataset.from_tensor_slices((x_val, y_val))
 val_uni = val_uni.batch(BATCH_SIZE).repeat()
 
-simple_lstm = tf.keras.models.Sequential([tf.keras.layers.LSTM(8, input_shape=x_train.shape[-2:]), tf.keras.layers.Dense(1)])
+simple_lstm = tf.keras.models.Sequential()#[tf.keras.layers.LSTM(4, input_shape=x_train.shape[-2:]), tf.keras.layers.Dense(1)])#units 8 -> 4
+simple_lstm.add(tf.keras.layers.LSTM(8), input_shape=x_train.shape[-2:])
+simple_lstm.add(tf.keras.layers.Dense(1))
 simple_lstm.compile(optimizer='adam', loss='mae')
 
 EVALUATION_INTERVAL = 200
