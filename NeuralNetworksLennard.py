@@ -77,12 +77,9 @@ for timeseries in range(len(observe)):
 print(len(detrended))
 TRAIN_SPLIT = 14
 tf.random.set_seed(13)
-print(detrended)
-print(detrended.values)
-#observe = observe.values
-
-#observe_train_mean = observe[:TRAIN_SPLIT].mean()
-#observe_train_std = observe[:TRAIN_SPLIT].std()
+print(detrended)#list with timeseries with 19 entries [1976:1994]
+observe_train_mean = detrended[:TRAIN_SPLIT].mean()
+observe_train_std = detrended[:TRAIN_SPLIT].std()
 
 #observe = (observe-observe_train_mean)/observe_train_std
 
