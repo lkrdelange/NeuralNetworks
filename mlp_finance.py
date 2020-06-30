@@ -18,7 +18,7 @@ class NeuralNetwork(object):
         return self.A2
 
     def derivative_MSE(self, A, output):
-        return 2 * output * (A-output)
+        return 2 * output * (A - output)
 
     def delta_W(self, A, output, learning_rate):
         return learning_rate * np.mean(self.derivative_MSE(A, output))
@@ -46,7 +46,6 @@ if __name__ == '__main__':
     #X = [networth timestep N], Y = [networh timestep N + 1]
     X = np.array(([900.10], [948.48], [1020.21]), dtype = float)
     Y = np.array(([1040.24]), dtype = float) 
-
     neuralNetwork = NeuralNetwork()
     #X = neuralNetwork.normalizer(X)
     #Y = neuralNetwork.normalizer(Y)
