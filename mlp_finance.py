@@ -1,6 +1,4 @@
 import numpy as np
-
-
 class NeuralNetwork(object):
 
     #Constructor 
@@ -15,24 +13,22 @@ class NeuralNetwork(object):
 
     # FF through the networks
     def feedForward(self, X):
-        self.A = np.matmul(np.transpose(X), self.W1)#np.dot(X, self.W1) # Dotproduct, singlenumber 
-        self.A2 = np.matmul(self.A, self.W2) # Dot product of hidden layer and second set of weights 
+        self.A = np.matmul(np.transpose(X), self.W1) # Activation of hidden layers 
+        self.A2 = np.matmul(self.A, self.W2) # Activation of output layers 
         return self.A2
 
-    def derivative_MSE(self, Y, output):
-        return output * 2 * (Y-output)
+    def derivative_MSE(self, A, output):
+        return 2 * output * (A-output)
 
-    def delta_W(self, A, t, learning_rate):
-        return learning_rate * np.mean(self.derivative_MSE(A, t))
+    def delta_W(self, A, output, learning_rate):
+        return learning_rate * np.mean(self.derivative_MSE(A, output))
 
     # Backward propagate through the network (min. error, thus the sum of squares)
     def backward(self, X, Y, output):
-        self.derivative_A2 = self.derivative_MSE(Y, output)
+        self.derivative_A2 = self.delta_W(Y, output, 0.9)
         self.derivative_A1 = self.delta_W(self.A2, output, 0.9)
-        print(self.derivative_A2)
-        print(X)
-        self.W1 = np.transpose(X) * self.derivative_A1
-        self.W2 = np.matmul(np.transpose(self.A2), self.derivative_A2) #self.z2.T.dot(self.output_delta)
+        self.W1 = self.W1 - self.derivative_A2
+        self.W2 = self.W2 - self.derivative_A1
 
     # Trains the FF
     def train(self, X, Y):
@@ -59,5 +55,6 @@ if __name__ == '__main__':
         neuralNetwork.train(X, Y)
 
     print("predicted output: ", neuralNetwork.feedForward(X))
+    
         
     
