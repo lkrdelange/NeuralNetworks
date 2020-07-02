@@ -5,6 +5,20 @@ import numpy as np
 import pandas as pd
 import os
 
+
+def calc_detrended(dataset):
+    diff = list()
+    #dataset.plot(subplots = True)
+    #plt.show()
+    for i in range(1, len(dataset)):
+        value = dataset.iloc[i] - dataset.iloc[i-1]
+        diff.append(value)
+    #plt.plot(diff)
+    #plt.show
+    return diff
+    
+        
+    
 path = os.path.abspath("M3TrainingSet.xlsx")
 xls = pd.ExcelFile(path)
 
@@ -15,18 +29,6 @@ observe.index = original_data.loc[1:147,'Series']
 print(observe)
 print(len(observe))
 
-def calc_mean(dataset):
-    diff = list()
-    #dataset.plot(subplots = True)
-    #plt.show()
-    for i in range(1, len(dataset)):
-        value = dataset.iloc[i] - dataset.iloc[i-1]
-        diff.append(value)
-    return diff
-    #plt.plot(diff)
-    #plt.show()
-        
-    
 def univariate_data(dataset, start_index, end_index, history_size, target_size):
     data = []
     labels = []
@@ -72,14 +74,22 @@ def baseline(history):
 
 detrended = list ()
 for timeseries in range(len(observe)):
-    detrended.append(calc_mean(observe.iloc[timeseries]))
+    detrended.append(calc_detrended(observe.iloc[timeseries]))
 
 print(len(detrended))
 TRAIN_SPLIT = 14
 tf.random.set_seed(13)
-print(detrended)#list with timeseries with 19 entries [1976:1994]
-observe_train_mean = detrended[:TRAIN_SPLIT].mean()
-observe_train_std = detrended[:TRAIN_SPLIT].std()
+print(detrended[0])#list with timeseries with 19 entries [1976:1994]
+plt.plot(detrended[0])
+plt.show()
+plt.plot(observe.iloc[0])
+plt.show()
+
+#show_plot()
+
+
+#observe_train_mean = detrended[:TRAIN_SPLIT].mean()
+#observe_train_std = detrended[:TRAIN_SPLIT].std()
 
 #observe = (observe-observe_train_mean)/observe_train_std
 
@@ -101,20 +111,20 @@ observe_train_std = detrended[:TRAIN_SPLIT].std()
 #BUFFER_SIZE = 10000
 
 #train_uni = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-train_uni = train_uni.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
+#train_uni = train_uni.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
 
-val_uni = tf.data.Dataset.from_tensor_slices((x_val, y_val))
-val_uni = val_uni.batch(BATCH_SIZE).repeat()
+#val_uni = tf.data.Dataset.from_tensor_slices((x_val, y_val))
+#val_uni = val_uni.batch(BATCH_SIZE).repeat()
 
-simple_lstm = tf.keras.models.Sequential()#[tf.keras.layers.LSTM(4, input_shape=x_train.shape[-2:]), tf.keras.layers.Dense(1)])#units 8 -> 4
-simple_lstm.add(tf.keras.layers.LSTM(8), input_shape=x_train.shape[-2:])
-simple_lstm.add(tf.keras.layers.Dense(1))
-simple_lstm.compile(optimizer='adam', loss='mae')
+#simple_lstm = tf.keras.models.Sequential()#[tf.keras.layers.LSTM(4, input_shape=x_train.shape[-2:]), tf.keras.layers.Dense(1)])#units 8 -> 4
+#simple_lstm.add(tf.keras.layers.LSTM(8), input_shape=x_train.shape[-2:])
+#simple_lstm.add(tf.keras.layers.Dense(1))
+#simple_lstm.compile(optimizer='adam', loss='mae')
 
-EVALUATION_INTERVAL = 200
-EPOCHS = 10
+#EVALUATION_INTERVAL = 200
+#EPOCHS = 10
 
-simple_lstm.fit(train_uni, epochs=EPOCHS, steps_per_epoch=EVALUATION_INTERVAL, validation_data=val_uni, validation_steps=50)
+#simple_lstm.fit(train_uni, epochs=EPOCHS, steps_per_epoch=EVALUATION_INTERVAL, validation_data=val_uni, validation_steps=50)
 
-for x, y in val_uni.take(3):
-  plot = show_plot([x[0].numpy(), y[0].numpy(), simple_lstm.predict(x)[0]], 0, 'Simple LSTM model')
+#for x, y in val_uni.take(3):
+#  plot = show_plot([x[0].numpy(), y[0].numpy(), simple_lstm.predict(x)[0]], 0, 'Simple LSTM model')
