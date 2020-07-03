@@ -20,6 +20,7 @@ def left_to_right(origin, N):
     return ret
 
 def standard(origin):
+    print("bon",origin)
     vals = origin.values
     min_max = preprocessing.MinMaxScaler()
     val_scaled = min_max.fit_transform(vals)
@@ -31,8 +32,6 @@ def standard(origin):
 def de_trend(origin):
     X = [i for i in range(0, len(origin))]
     X = np.reshape(X, (len(X), 1))
-    print("org", origin)
-    print("obs", observe)
     y = observe.values
     model = LinearRegression()
     model.fit(X, y)
@@ -64,10 +63,12 @@ path = os.path.abspath("M3TrainingSet.xlsx")
 xls = pd.ExcelFile(path)
 original_data = pd.read_excel(xls)
 
+original_data = pd.read_excel(xls)#, 'M3Year')
+
 #observe = original_data.loc[0:146,5]
 #observe.index = original_data.loc[0:146,'Series'] These are for top to bottom
 
-observe = left_to_right(original_data, 1) #select which series to investigate
+observe = left_to_right(original_data, 0) #select which series to investigate
 
 print(observe.head()) #Checking that the right data is selected
 

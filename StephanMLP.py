@@ -8,7 +8,9 @@ from statsmodels.tsa.api import ExponentialSmoothing, SimpleExpSmoothing
 from sklearn import preprocessing
 from sklearn.linear_model import LinearRegression
 from pandas.plotting import autocorrelation_plot
+from scipy.special import expit
 import scipy.signal as sig
+import matplotlib.pyplot as plt
 
 
 
@@ -22,12 +24,16 @@ class NeuralNetwork(object):
         self.outputsize = 1
         #weights
         self.W1_2 = np.random.randn(self.inputsize, self.hiddensize) # input to hidden weights
+        np.clip(self.W1_2, -50, 50)
         self.W2_3 = np.random.randn(self.hiddensize, self.hiddensize) # hidden to hidden layer weights
+        np.clip(self.W2_3, -50, 50)
         self.W3_4 = np.random.randn(self.hiddensize, self.outputsize) # hidden to output layer weights
+        np.clip(self.W3_4, -50, 50)
+
         #bias
         self.bias = 1.0
         #learning rate
-        self.learning_rate = 0.9
+        self.learning_rate = 0.2
         #potential
         self.potential_2 = 0.0
         self.potential_3 = 0.0
@@ -40,12 +46,15 @@ class NeuralNetwork(object):
     #Activation function
     def sigmoid(self, a, deriv=False):
         if (deriv == True):
+            #print("a;",a)
             return a * (1 - a)
-        return 1/(1 + np.exp(-a))
+        return expit(a)
 
     # FF through the networks
     def feedForward(self, X):
+        #print("X",X)
         self.potential_2 = np.matmul(X, self.W1_2)
+        #print("selfpot2",self.potential_2)
         self.A2 = self.sigmoid(self.potential_2 + self.bias)
         self.potential_3 = np.matmul(self.A2, self.W2_3)
         self.A3 = self.sigmoid(self.potential_3 + self.bias)
@@ -94,30 +103,40 @@ class NeuralNetwork(object):
 
     # Backward propagate through the network (min. error, thus the sum of squares)
     def backward_pass(self, X, Y, estimated_output):
+        #print("estim:",estimated_output,"Y:",Y)
         delta_output = self.delta_hidden_output(estimated_output, Y)
+        #print("delata_output:",delta_output)
         gradient_output = self.gradient_hidden_output(delta_output) # W3_4 has shape 2 * 1
         delta_hidden_L3 = self.delta_hidden_hidden(delta_output) # W2_3 has shape 2 * 2
         gradient_hidden_L3 = self.gradient_hidden_hidden(delta_hidden_L3)
         delta_hidden_L2 = self.delta_input_hidden(delta_hidden_L3) # W1_2 has shape 3 * 2
+        #print("deltaL2:",delta_hidden_L2)
         gradient_hidden_L2 = self.gradient_input_hidden(delta_hidden_L2, X)
+        #print("l2gradient:", gradient_hidden_L2)
         self.W3_4 = self.W3_4 - (self.learning_rate * np.asarray(gradient_output))
+        self.W3_4 = np.clip(self.W3_4, -2, 2)
         self.W2_3 = self.W2_3 - (self.learning_rate * np.asarray(gradient_hidden_L3))
+        self.W2_3 = np.clip(self.W2_3, -2, 2)
         self.W1_2 = self.W1_2 - (self.learning_rate * np.asarray(gradient_hidden_L2))
+        self.W1_2 = np.clip(self.W1_2, -2, 2)
+
+        #print("weight12:",self.W1_2)
 
 
     # Trains the NN through back_propagation
     def back_propagation(self, X, Y):
         estimated_output = self.feedForward(X)
+        #print("estim:",estimated_output)
         return self.backward_pass(X, Y, estimated_output)
 
 def left_to_right(origin, N):
-            ret = origin.loc[N, range(1,21)]
-            ret.index = pd.date_range('1975', periods=20, freq='AS')
-            ret = pd.DataFrame(data=ret)
-            ret.columns = ['values']
-            return ret
+    ret = origin.loc[N, range(1,21)]
+    ret.index = pd.date_range('1975', periods=20, freq='AS')
+    ret = pd.DataFrame(data=ret)
+    ret.columns = ['values']
+    return ret
 
-def standard(origin):
+def standardize(origin):
     vals = origin.values
     min_max = preprocessing.MinMaxScaler()
     val_scaled = min_max.fit_transform(vals)
@@ -126,10 +145,12 @@ def standard(origin):
     ret.columns = ['values']
     return ret
 
-def de_trend(origin):
+def de_trend(origin, index):
     X = [i for i in range(0, len(origin))]
     X = np.reshape(X, (len(X), 1))
-    y = observe.values
+    #print("org", origin)
+    #print("obs", observe[0])
+    y = observe[index].values
     model = LinearRegression()
     model.fit(X, y)
     trend = model.predict(X)
@@ -137,63 +158,120 @@ def de_trend(origin):
     ret = pd.DataFrame(data=sig.detrend(origin['values']))
     ret.index = pd.date_range('1975', periods=20, freq='AS')
     ret.columns = ['values']
-    return ret, trend
+    return ret#, trend
 
 if __name__ == '__main__':
 
-    
+
     path = os.path.abspath("M3TrainingSet.xlsx")
     xls = pd.ExcelFile(path)
     original_data = pd.read_excel(xls)
 
-    print(original_data.head())
+    j=0#because [0] contains years etc.
+    observe = []
+    while j < 146:
+        observe.append(left_to_right(original_data, j))
+        j+=1
 
-    observe = left_to_right(original_data, 3) #select which series to investigate
+    j=0
+    scaled = []
+    while j < 146:
+        scaled.append(standardize(observe[j]))
+        j+=1
 
-    print("OB",observe.iloc[0]) #Checking that the right data is selected
-
-    scaled = standard(observe) #scaling the data
-
-    notrend, trend = de_trend(scaled) #detrending the data
-
-    print("notrend",notrend.iloc[0])
-
-
-
+    j=0
+    notrend = []
+    while j < 146:
+        notrend.append(de_trend(scaled[j],j))
+        j+=1
 
 
 
     X = []
-    Y= []
+    Y = []
 
-    print(len(X))
-    i = 1
-    while i < 147:
+    print(len(notrend))
+    print(notrend[0])
+    i = 0
+    while i < 146:
         j = 0
+        # x_3 = np.array((notrend[i].iloc[13:16]), dtype= float)
+        # y_1 = np.array((notrend[i].iloc[16]), dtype= float)
+        # X.append(x_3)
+        # Y.append(y_1)
         while j < 20:
-            x_3 = np.array(([original_data.iloc[i, j+6:j+9]]), dtype= float)
-            y_1 = np.array(([original_data.iloc[i, j+9]]), dtype= float)
+            x_3 = np.array((notrend[i].iloc[j:j+3]), dtype= float)
+            y_1 = np.array((notrend[i].iloc[j+3]), dtype= float)
             X.append(x_3)
             Y.append(y_1)
-            #print("Y:",y_1)
             j= j+4
         i+=1
+    print("y2",Y[13])
+    print("lenghts X:",len(X),"Y",len(Y))
 
-    #X = np.array(([900.10], [948.48], [1020.21]), dtype = float).T
-    #Y = np.array(([1040.24]), dtype = float)
+    Xnep = np.array(([900.10], [948.48], [1020.21]), dtype = float).T
+    Ynep = np.array(([1040.24]), dtype = float)
 
     neuralNetwork = NeuralNetwork()
-    print("lenghtX:",len(X))
+    k=0
+    pretrainingprediction = []
+    for k in range(len(X)):
+        pretrainingprediction.append(neuralNetwork.feedForward(X[k].T))
+
+    print("predicted output: ", neuralNetwork.feedForward(X[k].T))
+
 
     gradient = 0.0
     for i in range(1): #Epochs
         print("epoch:",i)
         for  j in range(len(X)): #From i to max length training set where i is one timeseries in data set
-            neuralNetwork.back_propagation(X[j], Y[j])
+            neuralNetwork.back_propagation(X[j].T, Y[j])
         # emp_risk = (1 / 1000) * gradient
         # gradient = 0.0
         # print("[", i ,"]","Empericial risk is: ", emp_risk)
 
-    print("X:",X[8],"Y:",Y[8])
 
-    print("predicted output: ", neuralNetwork.feedForward(X[8]))
+    i=0
+    j=0
+    while i < len(X):
+        iEnd = i + 3
+        prediction1 = neuralNetwork.feedForward(X[iEnd].T)
+        X2 = []
+        X2.append(X[iEnd][1])
+        X2.append(X[iEnd][2])
+        X2.append(prediction1)
+        prediction2 = neuralNetwork.feedForward(np.array(X2,dtype=float).T)
+
+        X3 = []
+        X3.append(X[iEnd][2])
+        X3.append(prediction1)
+        X3.append(prediction2)
+        prediction3 = neuralNetwork.feedForward(np.array(X3,dtype=float).T)
+
+        X4 = []
+        X4.append(prediction1)
+        X4.append(prediction2)
+        X4.append(prediction3)
+        prediction4 = neuralNetwork.feedForward(np.array(X4,dtype=float).T)
+
+        X5 = []
+        X5.append(prediction2)
+        X5.append(prediction3)
+        X5.append(prediction4)
+        prediction5 = neuralNetwork.feedForward(np.array(X5,dtype=float).T)
+        plt.plot(notrend[j].values, 'b', label='True data')
+
+        predictionline = notrend[j].values
+        predictionline[15]=prediction1[0]
+        predictionline[16]=prediction2[0]
+        predictionline[17]=prediction3[0]
+        predictionline[18]=prediction4[0]
+        predictionline[19]=prediction4[0]
+        plt.ylim(-1,1)
+        plt.plot(predictionline, 'r', label='Prediction')
+        plt.title('Financial forecast')
+        plt.xlabel('Year', fontsize=10)
+        plt.legend()
+        plt.show()
+        i=i+5
+        j+=1
