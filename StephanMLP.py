@@ -222,15 +222,20 @@ if __name__ == '__main__':
 
 
     gradient = 0.0
-    for i in range(1): #Epochs
-        print("epoch:",i)
-        for  j in range(len(X)): #From i to max length training set where i is one timeseries in data set
-            neuralNetwork.back_propagation(X[j].T, Y[j])
+    while j < len(X):
+    #for  j in range(len(X)): #From i to max length training set where i is one timeseries in data set
+        neuralNetwork.back_propagation(X[j].T, Y[j])
+        j+=1
+        neuralNetwork.back_propagation(X[j].T, Y[j])
+        j+=1
+        neuralNetwork.back_propagation(X[j].T, Y[j])
+        j=j+3
+
         # emp_risk = (1 / 1000) * gradient
         # gradient = 0.0
         # print("[", i ,"]","Empericial risk is: ", emp_risk)
 
-
+    fitness = []
     i=0
     j=0
     while i < len(X):
@@ -259,19 +264,31 @@ if __name__ == '__main__':
         X5.append(prediction3)
         X5.append(prediction4)
         prediction5 = neuralNetwork.feedForward(np.array(X5,dtype=float).T)
-        plt.plot(notrend[j].values, 'b', label='True data')
+
+        #
+        # plt.plot(notrend[j].values, 'b', label='True data')
+        # print("notrend15",notrend[j].values[15])
+        # print("pred15",prediction1[0])
+        fitness.append(notrend[j].values[15] - prediction1[0])
+        fitness.append(notrend[j].values[16] - prediction2[0])
+        fitness.append(notrend[j].values[17] - prediction3[0])
+        fitness.append(notrend[j].values[18] - prediction4[0])
+        fitness.append(notrend[j].values[19] - prediction5[0])
 
         predictionline = notrend[j].values
         predictionline[15]=prediction1[0]
         predictionline[16]=prediction2[0]
         predictionline[17]=prediction3[0]
         predictionline[18]=prediction4[0]
-        predictionline[19]=prediction4[0]
-        plt.ylim(-1,1)
-        plt.plot(predictionline, 'r', label='Prediction')
-        plt.title('Financial forecast')
-        plt.xlabel('Year', fontsize=10)
-        plt.legend()
-        plt.show()
+        predictionline[19]=prediction5[0]
+
+        # plt.ylim(-1,1)
+        # plt.plot(predictionline, 'r', label='Prediction')
+        # plt.title('Financial forecast')
+        # plt.xlabel('Year', fontsize=10)
+        # plt.legend()
+        # plt.show()
         i=i+5
         j+=1
+    arr = np.asarray(fitness)
+    print("fitness",arr.mean())
