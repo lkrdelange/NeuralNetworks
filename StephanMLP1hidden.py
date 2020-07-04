@@ -33,7 +33,7 @@ class NeuralNetwork(object):
         #bias
         self.bias = 1.0
         #learning rate
-        self.learning_rate = 0.2
+        self.learning_rate = 0.05
         #potential
         self.potential_2 = 0.0
         self.potential_3 = 0.0
@@ -182,8 +182,6 @@ if __name__ == '__main__':
     X = []
     Y = []
 
-    print(len(notrend))
-    print(notrend[0])
     i = 0
     while i < 146:
         j = 0
@@ -198,83 +196,179 @@ if __name__ == '__main__':
             Y.append(y_1)
             j= j+4
         i+=1
-    print("y2",Y[13])
-    print("lenghts X:",len(X),"Y",len(Y))
 
+
+    j=0
+    i=0
+    if(1):
+        neuralNetwork = NeuralNetwork()
+        meanFit = []
+        fitness = []
+        while j < len(X):
+        #for  j in range(len(X)): #From i to max length training set where i is one timeseries in data set
+            neuralNetwork.back_propagation(X[j].T, Y[j])
+            j+=1
+            
+            neuralNetwork.back_propagation(X[j].T, Y[j])
+            j+=1
+            neuralNetwork.back_propagation(X[j].T, Y[j])
+            iEnd = j + 1
+
+            prediction1 = neuralNetwork.feedForward(X[iEnd].T)
+            X2 = []
+            X2.append(X[iEnd][1])
+            X2.append(X[iEnd][2])
+            X2.append(prediction1)
+            prediction2 = neuralNetwork.feedForward(np.array(X2,dtype=float).T)
+
+            X3 = []
+            X3.append(X[iEnd][2])
+            X3.append(prediction1)
+            X3.append(prediction2)
+            prediction3 = neuralNetwork.feedForward(np.array(X3,dtype=float).T)
+
+            X4 = []
+            X4.append(prediction1)
+            X4.append(prediction2)
+            X4.append(prediction3)
+            prediction4 = neuralNetwork.feedForward(np.array(X4,dtype=float).T)
+
+            X5 = []
+            X5.append(prediction2)
+            X5.append(prediction3)
+            X5.append(prediction4)
+            prediction5 = neuralNetwork.feedForward(np.array(X5,dtype=float).T)
+
+            #
+            # plt.plot(notrend[j].values, 'b', label='True data')
+            # print("notrend15",notrend[j].values[15])
+            # print("pred15",prediction1[0])
+            fitness.append(notrend[i].values[15] - prediction1[0])
+            fitness.append(notrend[i].values[16] - prediction2[0])
+            fitness.append(notrend[i].values[17] - prediction3[0])
+            fitness.append(notrend[i].values[18] - prediction4[0])
+            fitness.append(notrend[i].values[19] - prediction5[0])
+
+            predictionline = notrend[i].values
+            predictionline[15]=prediction1[0]
+            predictionline[16]=prediction2[0]
+            predictionline[17]=prediction3[0]
+            predictionline[18]=prediction4[0]
+            predictionline[19]=prediction5[0]
+
+            # plt.ylim(-1,1)
+            # plt.plot(predictionline, 'r', label='Prediction')
+            # #plt.plot(notrend[j].values, 'r', label='True values')
+            # plt.title('Financial forecast')
+            # plt.xlabel('Year', fontsize=10)
+            # plt.legend()
+            # plt.show()
+            # i=i+5
+            i+=1
+            j=j+3
+            arr = np.asarray(fitness)
+            meanFit.append(arr.mean())
+        meanFitnp = np.asarray(meanFit)
+        print("Final results, mean: ", meanFitnp.mean(), " Std dev: ", meanFitnp.std())
+        plt.ylim(-0.5,0.5)
+        plt.plot(meanFitnp, 'r', label='Fitness')
+        plt.title('Fitness against increasing training, 1 hidden layer, learning rate = 0.05')#\n Mean = '+str(round(meanFitnp.mean(),6))+', Standard deviation = '+str(round(meanFitnp.std(),6)))
+        plt.ylabel('Fitness (mean difference between prediction and true values)')
+        plt.xlabel('Training batches (one batch is first 12 data entries of a time series)', fontsize=10)
+        plt.legend()
+        plt.show()
+    
+    
     # Xnep = np.array(([900.10], [948.48], [1020.21]), dtype = float).T
     # Ynep = np.array(([1040.24]), dtype = float)
+    p=0
+    meanFit = []
+    while p < 100:
+        neuralNetwork = NeuralNetwork()
 
-    neuralNetwork = NeuralNetwork()
+        gradient = 0.0
+        j=0
+        while j < len(X):
+        #for  j in range(len(X)): #From i to max length training set where i is one timeseries in data set
+            neuralNetwork.back_propagation(X[j].T, Y[j])
+            j+=1
+            neuralNetwork.back_propagation(X[j].T, Y[j])
+            j+=1
+            neuralNetwork.back_propagation(X[j].T, Y[j])
+            j=j+3
 
-    gradient = 0.0
-    j=0
-    while j < len(X):
-    #for  j in range(len(X)): #From i to max length training set where i is one timeseries in data set
-        neuralNetwork.back_propagation(X[j].T, Y[j])
-        j+=1
-        neuralNetwork.back_propagation(X[j].T, Y[j])
-        j+=1
-        neuralNetwork.back_propagation(X[j].T, Y[j])
-        j=j+3
+        # emp_risk = (1 / 1000) * gradient
+        # gradient = 0.0
+        # print("[", i ,"]","Empericial risk is: ", emp_risk)
 
-    # emp_risk = (1 / 1000) * gradient
-    # gradient = 0.0
-    # print("[", i ,"]","Empericial risk is: ", emp_risk)
+        fitness = []
+        i=0
+        j=0
+        while i < len(X):
+            iEnd = i + 3
+            prediction1 = neuralNetwork.feedForward(X[iEnd].T)
+            X2 = []
+            X2.append(X[iEnd][1])
+            X2.append(X[iEnd][2])
+            X2.append(prediction1)
+            prediction2 = neuralNetwork.feedForward(np.array(X2,dtype=float).T)
 
-    fitness = []
-    i=0
-    j=0
-    while i < len(X):
-        iEnd = i + 3
-        prediction1 = neuralNetwork.feedForward(X[iEnd].T)
-        X2 = []
-        X2.append(X[iEnd][1])
-        X2.append(X[iEnd][2])
-        X2.append(prediction1)
-        prediction2 = neuralNetwork.feedForward(np.array(X2,dtype=float).T)
+            X3 = []
+            X3.append(X[iEnd][2])
+            X3.append(prediction1)
+            X3.append(prediction2)
+            prediction3 = neuralNetwork.feedForward(np.array(X3,dtype=float).T)
 
-        X3 = []
-        X3.append(X[iEnd][2])
-        X3.append(prediction1)
-        X3.append(prediction2)
-        prediction3 = neuralNetwork.feedForward(np.array(X3,dtype=float).T)
+            X4 = []
+            X4.append(prediction1)
+            X4.append(prediction2)
+            X4.append(prediction3)
+            prediction4 = neuralNetwork.feedForward(np.array(X4,dtype=float).T)
 
-        X4 = []
-        X4.append(prediction1)
-        X4.append(prediction2)
-        X4.append(prediction3)
-        prediction4 = neuralNetwork.feedForward(np.array(X4,dtype=float).T)
+            X5 = []
+            X5.append(prediction2)
+            X5.append(prediction3)
+            X5.append(prediction4)
+            prediction5 = neuralNetwork.feedForward(np.array(X5,dtype=float).T)
 
-        X5 = []
-        X5.append(prediction2)
-        X5.append(prediction3)
-        X5.append(prediction4)
-        prediction5 = neuralNetwork.feedForward(np.array(X5,dtype=float).T)
+            #
+            plt.plot(notrend[j].values, 'b', label='True data')
+            # print("notrend15",notrend[j].values[15])
+            # print("pred15",prediction1[0])
+            fitness.append(notrend[j].values[15] - prediction1[0])
+            fitness.append(notrend[j].values[16] - prediction2[0])
+            fitness.append(notrend[j].values[17] - prediction3[0])
+            fitness.append(notrend[j].values[18] - prediction4[0])
+            fitness.append(notrend[j].values[19] - prediction5[0])
 
-        #
-        # plt.plot(notrend[j].values, 'b', label='True data')
-        # print("notrend15",notrend[j].values[15])
-        # print("pred15",prediction1[0])
-        fitness.append(notrend[j].values[15] - prediction1[0])
-        fitness.append(notrend[j].values[16] - prediction2[0])
-        fitness.append(notrend[j].values[17] - prediction3[0])
-        fitness.append(notrend[j].values[18] - prediction4[0])
-        fitness.append(notrend[j].values[19] - prediction5[0])
+            predictionline = notrend[j].values
+            predictionline[15]=prediction1[0]
+            predictionline[16]=prediction2[0]
+            predictionline[17]=prediction3[0]
+            predictionline[18]=prediction4[0]
+            predictionline[19]=prediction5[0]
+            print("timeseries:",j)
 
-        predictionline = notrend[j].values
-        predictionline[15]=prediction1[0]
-        predictionline[16]=prediction2[0]
-        predictionline[17]=prediction3[0]
-        predictionline[18]=prediction4[0]
-        predictionline[19]=prediction5[0]
-
-        # plt.ylim(-1,1)
-        # plt.plot(predictionline, 'r', label='Prediction')
-        # plt.title('Financial forecast')
-        # plt.xlabel('Year', fontsize=10)
-        # plt.legend()
-        # plt.show()
-        i=i+5
-        j+=1
-    arr = np.asarray(fitness)
-    print("fitness",arr.mean())
+            plt.ylim(-1,1)
+            plt.plot(predictionline, 'r', label='Prediction')
+                #plt.plot(notrend[j].values, 'r', label='True values')
+            plt.title('Financial forecast, 1 hidden layer, learning rate = 0.05')
+            plt.xlabel('Year', fontsize=10)
+            plt.legend()
+            plt.show()
+            i=i+5
+            j+=1
+        arr = np.asarray(fitness)
+        meanFit.append(arr.mean())
+        print("fitness",arr.mean())
+        p+=1
+    meanFitnp = np.asarray(meanFit)
+    print("Final results, mean: ", meanFitnp.mean(), " Std dev: ", meanFitnp.std())
+    plt.ylim(-0.5,0.5)
+    plt.plot(meanFit, 'r', label='Fitness')
+    plt.title('Fitness over 100 trials, 1 hidden layer, learning rate = 0.05\n Mean = '+str(round(meanFitnp.mean(),6))+', Standard deviation = '+str(round(meanFitnp.std(),6)))
+    plt.ylabel('Fitness (mean difference between prediction and true values)')
+    plt.xlabel('Trials', fontsize=10)
+    plt.legend()
+    plt.show()
+    
