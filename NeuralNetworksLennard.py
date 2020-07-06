@@ -3,18 +3,31 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import os
 
-xls = pd.ExcelFile('/Users/lennardbornemann/NNetwork/M3Forecast.xls')
 
-original_data = pd.read_excel(xls, 'SINGLE')
-print(original_data.head())
+def calc_detrended(dataset):
+    diff = list()
+    #dataset.plot(subplots = True)
+    #plt.show()
+    for i in range(1, len(dataset)):
+        value = dataset.iloc[i] - dataset.iloc[i-1]
+        diff.append(value)
+    #plt.plot(diff)
+    #plt.show
+    return diff
+    
+        
+    
+path = os.path.abspath("M3TrainingSet.xlsx")
+xls = pd.ExcelFile(path)
 
-observe = original_data.loc[0:645,'Demographic']
-observe.index = original_data.loc[0:645,'N']
-print(observe.head())
-
-#observe.plot(subplots = True)
-#plt.show()
+original_data = pd.read_excel(xls)#, usecols = "G:BA")
+#print(original_data.head())
+observe = original_data.iloc[1:147, 6:26]
+observe.index = original_data.loc[1:147,'Series']
+print(observe)
+print(len(observe))
 
 def univariate_data(dataset, start_index, end_index, history_size, target_size):
     data = []
@@ -59,45 +72,59 @@ def show_plot(data, delta, title):
 def baseline(history):
     return np.mean(history)
 
-TRAIN_SPLIT = 515
+detrended = list ()
+for timeseries in range(len(observe)):
+    detrended.append(calc_detrended(observe.iloc[timeseries]))
+
+print(len(detrended))
+TRAIN_SPLIT = 14
 tf.random.set_seed(13)
+print(detrended[0])#list with timeseries with 19 entries [1976:1994]
+plt.plot(detrended[0])
+plt.show()
+plt.plot(observe.iloc[0])
+plt.show()
 
-observe = observe.values
-observe_train_mean = observe[:TRAIN_SPLIT].mean()
-observe_train_std = observe[:TRAIN_SPLIT].std()
+#show_plot()
 
-observe = (observe-observe_train_mean)/observe_train_std
 
-past_hist = 20
-future_target = 0
+#observe_train_mean = detrended[:TRAIN_SPLIT].mean()
+#observe_train_std = detrended[:TRAIN_SPLIT].std()
 
-x_train, y_train = univariate_data(observe, 0, TRAIN_SPLIT, past_hist, future_target)
+#observe = (observe-observe_train_mean)/observe_train_std
 
-x_val, y_val = univariate_data(observe, TRAIN_SPLIT, None, past_hist, future_target)
+#past_hist = 20
+#future_target = 0
 
-print('Single win of past')
-print(x_train[0])
-print('\n Target')
-print(y_train[0])
+#x_train, y_train = univariate_data(observe, 0, TRAIN_SPLIT, past_hist, future_target)
 
-show_plot([x_train[0], y_train[0], baseline(x_train[0])], 0, 'baseline sample')
+#x_val, y_val = univariate_data(observe, TRAIN_SPLIT, None, past_hist, future_target)
 
-BATCH_SIZE = 256
-BUFFER_SIZE = 10000
+#print('Single win of past')
+#print(x_train[0])
+#print('\n Target')
+#print(y_train[0])
 
-train_uni = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-train_uni = train_uni.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+#show_plot([x_train[0], y_train[0], baseline(x_train[0])], 0, 'baseline sample')
 
-val_uni = tf.data.Dataset.from_tensor_slices((x_val, y_val))
-val_uni = val_uni.batch(BATCH_SIZE).repeat()
+#BATCH_SIZE = 256
+#BUFFER_SIZE = 10000
 
-simple_lstm = tf.keras.models.Sequential([tf.keras.layers.LSTM(8, input_shape=x_train.shape[-2:]), tf.keras.layers.Dense(1)])
-simple_lstm.compile(optimizer='adam', loss='mae')
+#train_uni = tf.data.Dataset.from_tensor_slices((x_train, y_train))
+#train_uni = train_uni.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
 
-EVALUATION_INTERVAL = 200
-EPOCHS = 10
+#val_uni = tf.data.Dataset.from_tensor_slices((x_val, y_val))
+#val_uni = val_uni.batch(BATCH_SIZE).repeat()
 
-simple_lstm.fit(train_uni, epochs=EPOCHS, steps_per_epoch=EVALUATION_INTERVAL, validation_data=val_uni, validation_steps=50)
+#simple_lstm = tf.keras.models.Sequential()#[tf.keras.layers.LSTM(4, input_shape=x_train.shape[-2:]), tf.keras.layers.Dense(1)])#units 8 -> 4
+#simple_lstm.add(tf.keras.layers.LSTM(8), input_shape=x_train.shape[-2:])
+#simple_lstm.add(tf.keras.layers.Dense(1))
+#simple_lstm.compile(optimizer='adam', loss='mae')
 
-for x, y in val_uni.take(3):
-  plot = show_plot([x[0].numpy(), y[0].numpy(), simple_lstm.predict(x)[0]], 0, 'Simple LSTM model')
+#EVALUATION_INTERVAL = 200
+#EPOCHS = 10
+
+#simple_lstm.fit(train_uni, epochs=EPOCHS, steps_per_epoch=EVALUATION_INTERVAL, validation_data=val_uni, validation_steps=50)
+
+#for x, y in val_uni.take(3):
+#  plot = show_plot([x[0].numpy(), y[0].numpy(), simple_lstm.predict(x)[0]], 0, 'Simple LSTM model')
